@@ -1,61 +1,71 @@
+# views.py
 import pandas as pd
 from django.shortcuts import render
 from django.http import HttpResponse
+import io
 
-def combine_excel(request):
- if request.method == 'POST':
-     files = request.FILES.getlist('files')
-     print(files)
-     sainathArray = []
-     for file in files:
-        df = pd.read_excel(file)
-        sainathArray.append(df)
-     combined = pd.concat(sainathArray)
-     combined_file_name = 'combined_file.xlsx'
-     combined.to_excel(combined_file_name, index=False)
-     with open(combined_file_name, 'rb') as file:
-            response = HttpResponse(file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            response['Content-Disposition'] = f'attachment; filename="{combined_file_name}"'
+def upload_files(request):
+    if request.method == 'POST':
+        files = request.FILES.getlist('files')
 
-     return response
- return render(request, 'combine_excel.html')
+        # Create an empty DataFrame to store the merged data
+        merged_df = pd.DataFrame()
 
-#      return render(request, 'combine_excel.html', {'message': 'Files combined successfully!'})
-#  else:
-#      return render(request, 'combine_excel.html')
+        # Iterate over each uploaded file
+        for file in files:
+            # Read the uploaded file using pandas
+            df = pd.read_excel(file)
 
+            # Select the specified columns
+            selected_columns = ['B', 'F', 'G']
+            df_selected = df[selected_columns]
 
+            # Append the selected columns to the merged DataFrame
+            merged_df = pd.concat([merged_df, df_selected])
 
-    #  if request.method == 'POST':
-    #     files = request.FILES.getlist('files')
+        # Generate a new Excel file
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            merged_df.to_excel(writer, index=False, sheet_name='Sheet1')
+        output.seek(0)
 
-    #     combined = pd.DataFrame()
-    #     for file in files:
-    #         df = pd.read_excel(file)
-    #         combined = combined.append(df, ignore_index=True)
+        # Set the appropriate response headers
+        response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        my_text_value = request.POST.get('my_text_field')
+        print(my_text_value)
+        combined_file_name = my_text_value+".xlsx"
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(combined_file_name)
+        return response
 
-    #     combined.to_excel('combined_file.xlsx', index=False)
+    return render(request, 'upload.html')
 
-    #     return render(request, 'combine_excel.html', {'message': 'Files combined successfully!'})
-    #  else:
-    #     return render(request, 'combine_excel.html')
+# views.py
+# import pandas as pd
+# from django.shortcuts import render
+# from django.http import HttpResponse
+# import io
 
-    # if request.method == 'POST':
-    #     files = request.FILES.getlist('files')
+# def upload_file(request):
+#     if request.method == 'POST':
+        # Assuming your form has <input type="file" name="file" />
+        # file = request.FILES['file']
 
-    #     combined_data = pd.DataFrame()
-    #     for file in files:
-    #         df = pd.read_excel(file)
-    #         combined_data = combined_data.concat(df)
+        # Read the uploaded file using pandas
+        # df = pd.read_excel(file)
 
-    #     combined_file_name = 'combined_file.xlsx'
-    #     combined_data.to_excel(combined_file_name, index=False)
+        # Select the specified columns
+        # selected_columns = ['B', 'F', 'G']
+        # df_selected = df[selected_columns]
 
-    #     # Prepare the file for download
-    #     with open(combined_file_name, 'rb') as file:
-    #         response = HttpResponse(file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    #         response['Content-Disposition'] = f'attachment; filename={combined_file_name}'
+        # Generate a new Excel file
+        # output = io.BytesIO()
+        # with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        #     df_selected.to_excel(writer, index=False, sheet_name='Sheet1')
+        # output.seek(0)
 
+        # Set the appropriate response headers
+    #     response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    #     response['Content-Disposition'] = 'attachment; filename=rearranged_file.xlsx'
     #     return response
 
-    # return render(request, 'combine_excel.html')
+    # return render(request, 'upload.html')

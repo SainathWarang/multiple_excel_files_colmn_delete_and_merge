@@ -2,5 +2,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.combine_excel, name='combine_excel'),
+    path('', views.upload_files, name='upload_file'),
 ]
